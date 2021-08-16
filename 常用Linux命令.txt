@@ -1,0 +1,8 @@
+1、rz   上传文件
+2、chmod   +增加权限   -删除权限  =重新分配权限    r读   w写  x执行      exp：chmod +x  zqsjfx2.sh
+3、touch  创建一个空文件  exp：touch  test.txt
+4、tar  压缩/解压文件   z使用compress属性，c压缩文件,v显示过程，f指定文件名，x解压文件，exp：tar -zcvf  test.txt
+5、rm 删除文件   -r 递归删除，会将该文件下的都删除，-f强制执行，不会提示， exp：rm -rf  test.txt
+6、vim 编辑窗口   进入vim视图，按insert或i开始编辑，编辑完按Esc结束插入，按:wq保存，在按回车键退出vim视图
+7.  sz  从远程服务器下载到本地     exp:  sz /yaozhang/1.txt
+8. awk 文本分析(把文件逐行读入)

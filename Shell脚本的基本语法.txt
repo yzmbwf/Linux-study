@@ -1,0 +1,929 @@
+
+
+关于shell脚本的基本语法
+
+
+一、执行
+
+	1.shell脚本如果要被执行，一般地必须要有执行权限“x”（除了使用特殊的执行方式不需要外）
+
+	2.shell脚本执行的方式有以下几种：
+
+		①--参数式执行1：/bin/sh createFiles.sh（不需要x权限），简写为“sh createFiles.sh”
+
+		②--参数式执行2：/bin/bash createFiles.sh（不需要x权限），简写为“bash createFiles.sh”
+
+
+		③--直接执行：createFiles.sh（此脚本所在目录必须在PATH环境变量中）
+
+
+		④--路径式执行1：source ./createFiles.sh
+
+		⑤--路径式执行2：. ./createFiles.sh（source叫做点命令，常用“.”进行替代）
+
+		⑥--路径式执行3：./createFiles.sh（开启子shell环境，其里面的环境无法返回到父shell）
+
+		⑦--路径式执行4：/root/createFiles.sh
+
+
+二、调试
+
+	1.shell脚本的调试可以在执行时外在的手动进行指定，也可以在脚本内部提前注明
+
+	2.shell脚本的调试有以下几种方式
+
+		①--执行时开启调试：sh -x createFiles.sh（执行一行，显示一行，显示中带“+”表示由shell处理，
+
+		    不带的则是shell的输出，调试时按下Ctrl + Z可以中断调试，fg键继续调试）
+
+		②--伪执行开启调试：sh -n createFiles.sh（不真正执行，只做语法检查）
+
+
+		③--调试代码块：脚本很大，但需要调试的代码块却很少，在脚本中处理
+		    set -x
+		    ...
+		    Code Block（require debug）
+		    ...
+		    set +x
+
+		④--调试函数：类似于③
+		    set -x
+		    ...
+		    Function Call
+		    ...
+		    set +x
+
+
+三、执行和调试中的TroubleShooting
+
+	1.shell脚本执行及调试过程中会有一些常见的错误，根据下面提供的问题现象可以较为快速地进行定位
+
+	2.shell脚本执行和调试中常见的错误提示：
+
+		①--xxx.sh: cannot shift
+
+		    这种错误一般是参数传递有误，比如没有给参数，或者参数个数少了。因为shell脚本使用shift来获取
+
+		    下一个参数，如果个数不对，shift命令就会失败
+
+		②--xxx.sh: ^M: not found
+
+		    ^M是Windows上的回车符\r在UNIX上的显示形式。这种情况多半是在Windows上编辑了shell脚本，然后
+
+		    拿到UNIX/Linux上执行。只要将文件中所有的\r删除即可
+
+		    tr -d "\r" <oldfile.sh > newfile.sh
+
+		    或者一个更标准的方法，因为\r的ASCII码是\015，所以可以这样：
+
+		    tr -d "\015" < oldfile.sh > newfile.sh
+
+
+四、脚本基本规定
+
+	1.基本的架构规定	
+	
+		①--脚本的第一行内容是指定解析该脚本的shell：#!/bin/bash
+
+		②--第二行和以下几行基本上是关于此脚本的功能解释
+	
+		③--脚本无参数时，给出Usage说明，加“-h”或者“--help”时也给出Usage说明，如果确实不需要参数，在
+
+		    Usage函数中给出采用默认值的选项，如“--default”
+
+		④--正文中，第一个函数，强烈建议写成脚本的Usage说明
+
+		⑤--检测函数最好写在前面
+
+	2.关于注释
+
+		①--单行注释：使用“#”进行注释，是linux中非常正规的注释，但是对于多行注释来说就不太好用了
+
+		②--多行注释：linux中不像其他语言那样，存在简单的多行注释符号，比如C/C++里面的那个符号，但是，要实现这样的效果
+
+		    我们还得使用变通的方法，这里就是用的“HereDocument”方式，如下：
+
+		    <<COM
+
+		    ...（require commented）
+
+		    COM
+
+		    这里的COM是一对，其实可以是任何英文字符，大小写无所谓，只要成对即可。第一个COM前后间的空格将会被忽略。这种
+
+		    注释一般地无法注释掉COM对中的变量，比如，变量引用等，所以，执行时，那些代码段还是会被执行的，要解决这个问题，
+
+		    只要使用双引号或者单引号，把第一个COM给包起来即可。另外，当开始的“<<”变成“<<-”时，唯一的区别就是，这种
+
+		    用法下，内容部分内每行前面的制表符将会被删除，可以用来进行缩进方面的处理
+
+	3.书写风格：书写代码时，注意养成属于自己一定的风格，一来看起来清爽，二来一定的缩进利于代码结构的区分等
+
+		①--一般地，一行书写一个（逻辑上是一个小整体）命令，这也是推荐的，这样便于阅读
+
+		②--一行书写多个命令时，或者存在多个shell关键字时，需要用分号“；”分隔开，这并不推荐
+
+		③--对于特殊的语句，例如，流程控制类的语句，最好加上缩进（一般地，也加上相应的缩进），便于代码阅读。缩进的值建议
+
+		    以2个字符为单位，vim的配置文件中，使用ts的值可以进行TAB键宽度的指定
+
+		④--大模块之间使用较大的间隔空开，比如三行空行，小模块之间可以使用两行空开，换行紧凑型的可以使用一行空行隔开
+
+	4.变量名称：shell的变量可以不用显示指定类型，直接赋值就是定义，引用时，加上“$”符号即可
+
+		①--shell变量有4种，环境变量，位置变量、预置变量、用户自定义变量
+
+		②--用户自定义变量在声明时注意符合Java的命名规则，采用“驼峰法”（个人习惯而已）
+
+		③--用户自定义变量声明时最好加上类似于Java中的强制类型符的缩写，做为小驼峰，如“strName=HeJianfei”，搭眼一看，
+
+		    这个变量中存储的是字符串，且存储的是一个名字。常用的类型前缀有：bln、byt、int、lng、sng、dbl、dtm、str、
+
+		    obj、err等，数组arr，另外，还可以加上作用域标示符，如，glb、loc（个人习惯而已）
+
+		④--当变量名称和字符混合时很容易混淆，引起解析错误，这时，可以使用花括号括住我们的变量，如“echo ${strName}Age”，
+
+		    而小括号里括起来的是命令，等同于一对倒引号“`”
+
+	5.关于函数：linux shell中可以自定义函数，然后在脚本中随意调用
+
+		①--函数的定义如下：
+
+		    [function] functionName()
+		    {
+		        action;
+
+		        [return int;]
+		    }
+
+		    这里关于函数的定义中，关键字“function”可有可无，但是，一般地，建议写上
+
+		②--上述定义中，返回值也是可有可无，如果加的话，指定一个整数值n（0~255），如果不指定return语句，则以函数体中最后
+
+		    一个语句的执行结果作为函数的返回值
+
+		③--return语句中，也可以使用临时的中间变量的，如“return $(($1+$2));”
+
+		④--承上，如果有“total=$(functionName 3 2)”，并且打印“echo $total”，可以发现拿到的是空值，这是因为，一对括号中
+
+		    中的那个函数调用，相当于一个命令，对于命令结果的获取，在shell中必须通过预置变量“$?”来获得。故而，上面的调用中，
+
+		    可以在调用后紧接着使用“total=$?”来获取调用的结果
+
+		⑤--函数调用之前的变量是全局变量，在函数内部可以使用关键字local定义局部变量
+
+		⑥--函数名称可以与系统原有的命令名称一致，shell在解析时，会先在脚本中寻找，建议不要写成重名的
+
+		⑦--要想在函数中返回其他类型的结果时，可以设定一个全局变量，然后在函数中修改此变量，最后执行此函数时，就可以读出它了，
+
+		    这是一种变通的返回值处理方法
+
+		⑧--函数在调用时的使用方式，类似于平常linux下面的命令处理方式，多个参数间用空格隔开，且函数名字后不要加括号
+
+	6.关于数组：有时在shell中也需要数组，这样处理问题比较好理解，shell数组的创建如下：
+
+		①--seq方法生成：
+
+		    arrList=$(seq 100)
+
+		    seq方法得到的是字符串，以空格分开，在linux中可以认为它是list（列表），使用for循环处理，如果需要生成数组，可以在
+
+		    等号右边再加一对括号：arrArray=($(seq 100))。打印数组长度：“echo ${#aNumList[@]}”，输出值为100。用${数组名[下标]}
+
+		    下标是从0开始，下标是：*或者@得到整个数组内容。引用数组元素：“echo ${aNumList[3]}”，输出值为4。具体使用可以参看：
+
+		    http://www.cnblogs.com/chengmo/archive/2010/09/30/1839632.html（linux shell 数组建立及使用技巧）
+
+
+五、流程控制语句
+	
+	1.对于shell中的分支语句，常用if。其结构有三种：
+
+		①--单判断：注意，这种格式中当if和then在同行时，条件结尾必须有连着的分号。不在时，则没有
+		    
+		    if ... ; then
+		      commands
+		    fi
+
+		    不在同一行时：
+
+		    if ...
+		    then
+		      commands
+		    fi	
+
+		②--双判断：
+
+		    if ...; then
+		      commands1
+		    elseif ...; then
+		      commands2
+		    else
+		      commands3
+		    fi
+
+		③--多判断：三层及三层以上的判断，对前面的双判断进行扩展即可
+
+	2.case分支结构：虽然，多种情况的处理可以使用if进行判断，但是，case使用起来处理效果更佳
+
+		①--case结构：注意，每行的末尾有空格，且以“;;”结尾
+
+		    case $arg in
+		         pattern | sample) commands ;;
+		         pattern) commands ;;
+		         1) commands1 ;;
+		         2) commands2 ;;
+		         *) commands3(default) ;;
+		    esac
+
+		    上面的pattern是选择的具体表达式：*代表任何字符；？代表任何字元；[abc]代表a、b、c中的任何一个；
+
+		    [a-n]代表从a到n的任何一个字元；|代表多重选择
+
+	3.select选择结构：产生选单用
+
+		①--select结构：用来产生选择菜单用，里面的commands经常是case结构，是循环选择
+
+		    select arg in sequence(实际的变量序列，以空格分隔)
+		    do
+		      commands
+		    done
+
+
+	4.for循环结构：功能强大、使用频率很高
+
+		①--for结构1：sequence格式
+
+		    for arg in sequence(实际的变量序列，以空格分隔)
+		    do
+		      commands
+		    done
+
+		②--for结构2：C语言格式
+
+		    for((赋初值；条件；自增/自减))
+		    do
+		      commands
+		    done
+
+	5.while循环结构：条件为真时，可以呆在循环中一直处理
+
+		①--while结构：比起for简单了许多
+
+		    while 条件
+		    do
+		      commands
+		    done
+
+	6.util循环结构：直到型循环结构，一直执行，直到条件满足时才退出循环
+
+		①--util结构：结构上类似于while
+
+		    util 条件
+		    do
+		      commands
+		    done
+
+	7.条件测试：shell编程中，多数情况下是需要关注变量的状态及多个变量之间的关系的，这时，就需要对变量进行测试。主要使用的命令是test，
+
+	        其测试的范围是整数、字符串、文件。使用语法为：“test 测试条件”
+
+		①：test str1=str2（是否相等）
+
+		②：test str1!=str2（是否不相等）
+
+		③：test -z str（是否为空）
+
+		④：test -n str（是否不为空）
+
+
+		⑤：test int1 -eq int2（是否相等）
+
+		⑥：test int1 -ne int2（是否不相等）
+
+		⑦：test int1 -ge int2（大于等于）
+
+		⑧：test int1 -le int2（小于等于）
+	
+		⑨：test int1 -gt int2（大于）
+
+		⑩：test int1 -lt int2（小于）
+
+
+		11)：test -d file（是否是目录）
+	
+		12)：test -f file（是否是普通文件）
+
+		13)：test -r file（是否可读）
+
+		14)：test -w file（是否可写）
+
+		15)：test -x file（是否可执行）
+
+
+		16)：test -e file（是否存在，无论目录还是文件）
+
+		17)：test -s file（大小是否不为0）
+
+
+		变量的测试语句一般不会单独使用，多数是作为if的判断条件使用。这时，变量的测试语句可以简写为：“[ -d $file ]”其等价于
+
+		test -d $file，注意，前后都有空格分隔。对于字串的比较，“<”和“>”注意转义，用“[[]]”结构时可以不用转义。如果是对于
+
+		数字的处理（默认情况下，shell对变量的赋值按照字符串对待），建议使用结构“(())”
+
+
+		()、{}、(())、$()区别：
+		()：将一组命令（包含变量赋值）在子Shell中执行，命令之间使用分号分隔，最后命令后面的分号可有可无，括号内侧可以存在空格，
+		    命令间的分号分隔时也可以存在空格
+
+		{}：将一组命令（包含变量赋值）在当前Shell中执行，命令之间使用分号分隔，最后命令后面需要分号，左大括号内侧需要一个或者多个空格与
+		    第一个命令间分隔，命令之间的分号分隔时也可以存在空格，右括号内侧可以存在空格
+
+		(())：整数运算符，可以有空格分隔符
+
+		$()：对于一对倒引号的替代
+
+		变量放在if的判断条件中进行判断时，对于单字元的处理，使用[ -d $file ]结构，对于双字元的处理，建议使用[[ $a < $b ]]、[[ $a -lt $b ]]
+
+
+六、文本检索、打印、和编辑处理
+
+	1.shell脚本中经常会用到检索、打印、编辑处理等功能，这些功能的组合就是一个极为强大的小程序了。主要的命令为grep、awk、sed等。这里
+	  要注意结构中的单引号，有时，为了在结构中（单引号内）引用变量等，可以进行微调，将其改为双引号，记得调试，或者分段使用单引号，注意结构
+
+		①--grep：行分析器，支持正则表达式，将搜索到的信息打印出来。grep家族有grep、egrep（grep的增强版）、fgrep（fast grep），
+
+		    这三个grep可以使用-G、-E、-F进行切换，如“grep -E”相当于egrep，而fgrep会忽略掉RE字元的多个组合。常用grep。当不给
+
+		    定搜索文件的名字时，或者指定文件的名字为“-”时，grep会从标准输入设备读取内容
+
+		    -?：同时显示匹配行上下？行的内容，如“grep -2 hello”，共有5行		    
+
+		    -a：将binary文件中的数据以text方式进行搜索
+
+		    -c：统计范本被搜到的次数
+
+		    -i：忽略大小写
+
+		    -n：顺道输出行号
+
+		    -r：或者-R，在目录中进行递归搜索
+
+		    -v：反向选择
+
+
+		    要使用好grep，关键是写好RE正则表达式，同时得注意单双引号的区别以及转义字符。常用的RE如下：
+
+		    ^：锚定行的开始，即，以什么开始
+
+		    $：锚定行的结束，即，以什么结尾
+
+		    \<：锚定单词的开始
+
+		    \>：锚定单词的结尾
+
+
+		    .：匹配任意一个非换行（'\n'）符字符
+
+		    *：匹配零个或多个先前字符，一般地，需要开启扩展模式。 .*一起用代表任意字符
+
+		    []：匹配一个指定范围内的字符，如，[Gg]rep，会搜出Grep、grep
+
+		    [^]：匹配一个不在指定范围内的字符，如“[^A-FH-Z]rep”匹配不包含A-F和H-Z的一个字母开头，紧跟rep的行
+
+
+		    \(...\)：标记匹配字符，如，\(love\)，被标记为1
+
+
+		    x\{m,\}：重复字符x至少有m次
+
+		    x\{m,n\}：重复字符x至少m次，最多n次
+
+
+		    \w：匹配52个英文字符和10个数字
+
+		    \W：反置“\w”
+
+		    \b：单词锁定符号，如“\bgrep\b”，只匹配grep
+
+
+		    grep扩展模式下的常用RE：
+
+		    +：匹配一个或者多个先前的字符
+
+		    ?：匹配零个或一个先前字符
+
+		    a|b|c：匹配a或b或c
+
+		    ()：分组符号
+
+		    x{m}，x{m,}，x{m,n}：作用同x\{m\}，x\{m,\}，x\{m,n\}
+
+
+		②--awk：报表生成器，相对于grep的检索，sed的编辑而言，awk在对数据进行分析及报告时，是很强大的。简单来说，awk就是把
+
+		    文件逐行地读入，然后以空格为默认的分隔符（无-F时）将每行打散成小切片，最后对这些小切片分别进行处理。其使用方法如下：
+
+		    awk ‘{pattern + action}’或者awk ‘pattern {action}’
+
+		    具体操作可能很复杂，但是，其使用语法结构总是上面那样的。“pattern”就是寻找的待处理的数据，而“action”则是对
+
+		    前面的“pattern”进行的具体处理细节，也可定义变量。其中，花括号不需要在程序中始终出现，它们只是用于根据一定的模式对
+
+		    一系列的指令进行分组而已。一个指令时一般不加分号分组，多个指令时，每个指令后面使用分号分隔，最后也加，请注意
+
+
+		    awk的使用方式有以下三种：
+
+		    命令行使用方式--awk [-F field-sepatator] 'command' input_file(s)，comand是真正的awk命令
+
+		    shell脚本方式--类似于普通的bash shell script，只是，第一行为：#!/bin/awk
+
+		    文件调用形式--awk -f awk_script_file input_file(s)
+
+
+		    eg.01：显示用户和用户登录的shell，之间用“TAB”隔开，-F之后的那个单双引号的作用需要注意区别，因为二者关闭的meta不一样多
+		    cat /etc/passwd | awk -F ":" '{print $1"\t"$7}'
+
+		    eg.02：显示用户和其登录的shell，之间用逗号隔开，注意，先执行BEGIN块的，循环完了后，再执行END块的
+		    cat /etc/passwd | awk -F ':' 'BEGIN {print "name,shell"} {print $1","$7} END {print "wuming,/bin/nologin"}'
+
+		    eg.03：标准的awk格式
+		    cat /etc/passwd | awk -F ':' '/root/ {print $7}'
+
+
+		    awk内置变量：awk里面内置了许多变量，使用这些内置变量可以快速地进行环境信息的设定和捕捉
+
+		    ARGC：命令行参数个数
+
+		    ARGV：命令行参数排列
+
+		    ENVIRON：支持队列中系统环境变量的使用
+
+		    FILENAME：awk浏览的文件名
+
+		    FNR：awk浏览文件的数目
+
+		    FS：设置分隔域符号，等价于命令行的-F选项
+
+		    NF：浏览记录的域的个数
+
+		    NR：已读的记录数
+
+		    OFS：输出域分隔符
+
+		    ORS：输出记录分隔符
+
+		    RS：控制记录分隔符
+
+		    $0：代表整条记录，$1表示当前行的第一个域等等
+
+
+		    至于if分支、for循环等与C语言是一致的，编写复杂结构的时候，想想C语言中的那个语句块，就是花括号是如何安排的
+
+		    数组和变量自增等与C语言也是一致的
+
+
+		③--sed：一种在线编辑器，将当前处理的行存储在临时缓冲区，也冲模式空间（pattern space），接着用sed命令处理缓冲区
+
+		    中的行，处理完毕，送到屏幕输出。源文件是不会被修改的，除非你使用重定向进行存储或者使用-i参数，其使用有以下两
+
+		    种方式（comand之前也可以加上pattern的，类似于awk）：
+
+		    sed [options] 'command' file(s)
+
+		    sed [options] -f sed_file_script file(s)
+
+
+		    常用的参数：
+
+		    -n：使用安静模式，在一般的使用中（不加-n参数），所有来自STDIN的数据总会被列印到终端上，当使用安静模式时，
+
+		        只有经过sed特殊处理的那一行（或者动作），才会被列印到终端上，空格后加小写L可以看到每行的特殊字符是TAB还是空格
+
+		    -e：直接在命令列模式下进行sed的多点编辑
+
+		    -f：加载sed动作所在sed script，可以将sed的动作写进一个sed script中，然后使用“-f sed_file_script”进行加载
+
+		    -r：sed编辑功能支持ERE，默认是基础RE
+
+		    -i：在源文件中直接进行修改，而不是输出到终端
+
+
+		    常用动作：（sed编辑器的功能选项，结合参数使用）
+
+		    a：新增，a的后面可以跟字串，新增的字串出现在当前行的下一行
+
+		    i：插入，i的后面可以跟字串，新增的字串出现在当前行的上一行
+
+		    d：删除，因为是删除，所以其后一般不接东西
+
+
+		    c：取代，c的后面可以跟字串，这些字串可以取代“n1,n2”行之间的数据
+
+		    s：取代，可以进行直接的取代，通常，与RE一起使用，如“1,20s/old/new/g”
+
+
+		    p：列印，会将某个选择的数据印出，通常与“-n”参数一起使用
+
+
+
+		    eg.01：删除第二行
+		    cat /etc/passwd | sed '2d'
+
+		    eg.02：删除2~5行
+		    cat /etc/passwd | sed '2,5d'
+
+		    eg.03：删除2到最后一行
+		    cat /etc/passwd | sed '2,$d'
+
+
+
+		    eg.04：在第二行后面加上“Hello World!”
+		    cat /etc/passwd | sed '2a Hello World!'（注意不加单双引号）
+
+		    eg.05：在第二行后面加上两行内容“HelloWorld.jsp”和“HelloWorld.php”
+		    cat /etc/passwd | sed '2a HelloWorld.jsp\
+		    HelloWorld.php'（其前有“>”符号提示，多行时，每行后面的跳脱符号紧跟着，没有空格）
+
+
+
+		    eg.06：打印第2~5行
+		    cat /etc/passwd | sed -n '2,5p'
+
+
+
+		    eg.07：替换2~5行为“No 2-5 number”
+		    cat /etc/passwd | sed '2,5c No 2-5 number'
+
+
+
+		    eg.08：搜索只含有root的行（搜寻并显示）
+		    cat /etc/passwd | sed -n '/root/p'
+
+		    eg.09：搜索并删除含有root的行（搜寻并删除）
+		    cat /etc/passwd | sed '/root/d'
+
+		    eg.10：搜索并替换，找出本机的当前IP地址（搜寻并替换）
+		    /sbin/ifconfig eth0 | grep 'inet addr' | sed 's/^.*addr://g' | sed 's/Bcast.*$//g'
+
+		    eg.11：搜索并执行命令，找到root后，替换bash为blueshell列印退出
+		    cat /etc/passwd | sed -n '/root/{s/bash/blueshell/g;p;q}'
+
+
+
+		    eg.12：删除第三行到末尾的数据，并替换bash为blueshell（多点编辑，使用-e开启扩展模式）
+		    cat /etc/passwd | sed -e '3,$d' -e 's/bash/blueshell/g'
+
+
+		    !--表示的是，后面的命令对所有没有被选定的行进行操作，换句话说就是对选定行不处理
+		    &--表示的是，前面搜索到的字符串
+		    \(..\)和\1--表示的，前面括号中先搜到，放到一个位置，然后用\1先后引用前面位置处的内容
+
+
+		④--sort：排序器，对指定文件中的行进行排序，如果指定多个文件，则先连接这些文件然后对整体排序，其常用参数如下：
+
+		    -f：忽略大小写，如A与a认为是同一个字符
+
+		    -r：反向排序，默认是升序
+
+		    -n：使用数字型态进行排序，默认是按照文字型态进行排序的
+
+		    -t：域分隔符，默认是“TAB”
+
+		    -k：以哪个域进行排序
+
+		    -u：相同的数据只出现一行，相当于uniq
+
+		    -M：以月份来排序
+
+
+		    eg.01：所有默认，即，以“TAB”分隔，第一个域为标准，按照字符型态，升序，含重复进行排序
+		    cat /etc/passwd | sort
+
+		    eg.02：以“:”分隔，对第三个域，按照数字型态，倒序排序
+		    cat /etc/passwd | sort -t ':' -k 3nr
+
+		    eg.03：先以第六个域的第2个字符到第4个字符正向排序，然后基于第一个域进行反向排序
+		    cat /etc/passwd | sort -t ':' -k 6.2,6.4 -k 1r
+
+
+		⑤--uniq：去重器，搭配sort使用，去掉经sort排序后中的重复行（重复行相邻，必须先排序），其常用参数如下：
+
+		    -i：去重时忽略掉大小写
+
+		    -c：统计有重复的行每行重复的次数
+
+		    -d：只显示有重复的行
+
+		    -u：只显示唯一的行，即，没有重复的行
+
+
+		    eg.01：默认是去重的（排序，去重）
+		    cat price.dat | sort | uniq
+
+
+		⑥--wc：统计器，统计文件中有多少行，多少个单词，多少个字符，常用参数如下：
+
+		    -l：列印出有多少行
+
+		    -w：列印出有多少个单词
+
+		    -m：列印出有多少个字符
+
+
+		⑦--cut：字符列提取器，从文本流中提取出特定的列，常用参数如下：
+
+		    -b：按照字节进行定位，注意英文字符和中文字符的不同以及编码问题
+
+		    -c：按照字符进行定位
+
+		    -d：域分隔符，指定分隔时的标识符
+
+		    -f：指定分隔的域
+
+		    -n：不要将多字节的字符拆开计算
+
+
+		    eg.01：找出PATH环境变量中的第1~3以及第5个路径
+		    echo $PATH | cut -d ':' -f 1-3,5
+
+		    eg.02：找出PATH环境变量中的第1~3以及4到最后的路径
+		    echo $PATH | cut -d ':' -f -3,4-
+
+
+		⑧--xargs：处理长参数传送给命令时，系统报“命令的参数过长”问题
+
+		    使用一：xargs读取stdin，然后将格式化后的参数传递给命令，如
+		    cat example.txt | xargs -n 7 echo
+
+		    使用二：xargs可以将多行输入转换成单行输出，如
+		    cat example.txt | xargs
+
+		    使用三：xargs可以每行输出n个，如，每行输出三个
+		    cat example.txt | xargs -n 3
+
+		    使用四：杀掉CFG服务
+		    ps -axu | grep -i yfscfg | grep -iv "grep -i yfscfg" | awk '{print $2;}' | xargs kill -9
+
+
+七、复合命令的与或非、重定向及其他常用命令
+
+	1.linux命令在组合使用时的与或非情况
+
+		①--逻辑与（短路）：符号为“&&”表示的是前面的命令成功执行了，才继续执行后面的命令；当前面的命令执行失败时，短路掉后面的命令
+
+		②--逻辑或（短路）：符号为“||”表示的是前面的命令执行失败时，才继续执行后面的命令；当前面的命令执行成功时，短路掉后面的命令
+
+		③--逻辑非：符号为“!”，表示的取结果的反面
+
+		④--exit 0：表示的是让脚本在此正常退出，将返回值0存放到$?这个特殊变量中
+
+		⑤--exit 1：表示的是让脚本在此不正常退出，将返回值1存放到$?这个特殊变量中，并且，一般是找不到参数时你可以使用这个1,对于127代号，
+
+		    一般地，表示是$0有问题，至于其他的，如2这个代号，就得具体脚本具体分析了
+
+		⑥--expr：默认下，脚本中的变量都是按照字符串处理的，而expr命令可以实现算术运算，操作数与操作符间有间隔，如“expr 3 \* 7”，结果
+
+		    为21，乘号被做了转义处理。再如，“expr $x + $y”，也可以这样，“echo $(($x + $y))”，注意这个双括号的运用
+
+	2.重定向：输入数据来源和输出数据去向的问题。IO重定向与FD（文件标示符）是紧密结合在一起的，默认情况下，0代表STDIN，1代表STDOUT，2代表STDERR
+
+		①--<：代表输入重定向，其默认值是0，即，<和0<是一样的，<<用于HereDOCU重定向，可用来做大段注释用，一般地，输入重定向用的不是很多
+
+		②-->：代表输出重定向，其默认值是1，即，>和1>是一样的，>>用来追加用，使用非常广泛
+
+		③--|：管道符号，上一个命令的stdout接到了下一个命令的stdin，在IO重定向中，stdout和stderr的管道都会提前预备好，然后才从stdin去读取
+
+		④--exec：该命令用来替代当前shell并重新启动一个shell，但并没有启动子shell。使用这一个命令时，现有的环境都将被清除。exec在对文件标示符
+
+		    进行操作时，也只有在这时，exec才不会覆盖你的当前环境
+
+
+		eg.01：cmd > file，等价于“cmd 1> file”
+		将cmd的stdout重定向到file文件中
+
+		eg.02：cmd >> file，等价于“cmd 1>> file”
+		将cmd的stdout以追加的方式重定向到file文件中
+
+		eg.03：cmd 2> file
+		将cmd的stderr重定向到file文件中
+
+		eg.04：cmd 2> file
+		将cmd的stderr以追加的方式重定向到file文件中
+
+
+
+		eg.05：cmd > file 2>&1
+		将cmd的stdout和stderr流合并起来送往stdout，并重定向到file文件（当1的代表含义改变时，这个很有意义，一般基本无意义）
+
+		eg.06：cmd >> file 2>&1
+		将cmd的stdout和stderr流合并起来并送往stdout，并以追加的方式重定向到file文件中
+
+
+
+		eg.07：cmd <> file
+		以读写的方式打开file文件
+
+		eg.08：cmd < file1 > file2
+		cmd命令以file1文件作为stdin，之后，将输出重定向到file2文件
+
+		eg.09：cmd << delimiter Here document
+		从stdin一直读入，直到遇到delimiter，注意，这个是成对出现的
+
+
+
+		eg.10：<&-
+		关闭标准输入
+
+		eg.11：>&-
+		关闭标准输出
+
+		eg.12：n<&-
+		表示将n号输入关闭掉
+
+		eg.13：n>&-
+		表示把n号输出关闭掉
+
+
+
+		eg.14：<&n
+		标准输入复制于文件标示符n
+
+		eg.15：>&n
+		复制文件标示符n，并将结果用作标准输出
+
+
+
+		eg.16：exec 5>&-
+		关闭5号输出设备
+
+		eg.17：2>&1（缩写为&>）
+		表示的是复制1号输出设备的流向到2号设备处，其实就是将2号设备的流向指向1号设备，效果上是合并了这两个设备，当1号设备具有其他含义时，
+
+		这个变换就会存在很大意义了。一般地，可以使用文件标示符来临时地保存数据
+
+	3.shell脚本预置变量：前面曾经提到shell脚本中可以使用预置的变量来方便地进行脚本的开发，这些常用的变量如下：
+
+		①--$0：脚本的名称
+
+		②--$1：第一个参数。。。以此类推，从第10个开始为${10}，切记，2~9时是类似于$1的
+
+		③--$#：所有位置参数的个数
+
+		④--$*：所有的位置参数，作为单个的字符串处理
+
+		⑤--$@：所有的位置参数，每个作为单个的字符串处理
+
+		⑥--${#*}：传递到命令行参数的个数
+
+		⑦--${#@}：传递到命令行参数的个数
+
+		⑧--$?：上一个命令的返回值
+
+		⑨--$$：当前脚本运行的PID
+
+		⑩--$!：运行在后台的最后一个作业的PID
+
+		11)--$_：之前命令的最后一个参数
+
+		其他的，较为复杂的有关此方面的内容可以参考：http://www.ibm.com/developerworks/cn/linux/l-bash-parameters.html（Linux 技巧: Bash 参数和参数扩展），
+
+		http://blog.sina.com.cn/s/blog_730edb930100pyra.html（SHELL中的特殊变量和结构）
+
+
+八、传入参数的处理
+
+	1.shell脚本处理参数与函数处理参数类似，当使用shell内置的命令getopts时，我们可以方便地进行命令行下脚本传入参数的处理，其一般格式如下：
+
+	getopts options variable
+
+		①--getopts命令使用了两个预置的变量“OPTIND”和“OPTARG”。OPTIND变量刚开始就被置为1，之后它包含待处理的下一个参数的索引。如果找到一个选项，
+
+		则getopts命令返回true，因此常见的选项处理范例使用的是带case语句的while循环。
+
+		②--每次执行循环时，getopts就会检查下一个命令行选项，并判断它是否合法，即，检查选项是否以“-”开头，后面跟一个包含在options中的字母，如果是，
+
+		就把匹配的选项字母存在指定的变量variable中，并返回退出状态0；如果“-”后面的字母没有包含在options中，则变量variable中将包含一个“?”，并返回
+
+		退出状态0；如果命令行中已经没有参数，或者下一个参数不已“-”开头，就返回不为0的退出状态
+
+		③--在options选项表列中，选项字母后面的冒号“:”，表示的是该选项后面需要一个参数值，如格式，“-t 30”，实际运行脚本的时候，如果该参数值存在，
+
+		则会把该参数值放入OPTARG这个预置变量中。在options表列中，可以加上前导冒号的，如“:h:ms”，此前导冒号告诉getopts命令保持静默（silent）并抑制
+
+		正常的错误消息，因为，脚本可以提供自己的错误处理能力
+
+		④--总结如下：上述格式中，options是我们的选项表列，经常用双引号包含之，每次循环找到的选项放入到自定义变量variable中；对于带冒号的选项，对其
+
+		找到的参数值放入到预置变量OPTARG中（如果找不到，则variable变量存放一个“:”，OPTARG中将包含丢失参数值的选项的名称）；如果发现不能识别的选项，
+
+		则variable变量将包含一个“?”，而OPTARG中将包含该未知选项的名称；如果不是在静默模式下，产生的上述的两个错误将导致一条诊断错误消息而OPTARG不会
+
+		被设置；脚本中可能使用“?”或者“:”来检测错误或者是处理错误
+
+		⑤--其他：getopts命令允许选项堆叠，如“-tuv”，但是对于带有参数值的选项，则不可以，除非将其放到堆叠的最后，然后紧跟参数值，比如，tar命令的-f
+
+		选项
+
+
+
+		eg.01：
+		#!/bin/bash
+
+		echo "OPTIND starts at $OPTIND"
+
+		while getopts ":pq:" optname
+		do
+
+		  case "$optname" in
+
+		       "p")
+		           echo "Option $optname is specified"
+		           ;;
+
+		       "q")
+		           echo "Option $optname has value $OPTARG"
+		           ;;
+
+		       "?")
+		           echo "Unknown option $OPTARG"
+		           ;;
+
+		       ":")
+		           echo "No argument value for option $OPTARG"
+		           ;;
+
+		         *)
+		           # Should not occur
+		           echo "Unknown error while processing options"
+		           ;;
+		  esac
+
+		  echo "OPTIND is now $OPTIND"
+
+		done
+
+
+
+	2.设置默认值：有时，一些带参数的选项，我们可以为其设定默认值，这样就不用在CLI中输入重复的参数值了。处理非常简单，在脚本中的getopts命令之前先设置好
+
+	默认值，然后进行getopts命令，获取新的，传进来的选项的参数，如果有的话就用新的值去覆盖；如果在执行脚本时，没有指定，那么脚本中就会使用默认值
+
+
+九、其他参考资料
+
+	1.http://knix.blog.163.com/blog/static/29575035201061511849451/（通过示例学规则，bash shell 示例 -- 2/2 ）
+
+	2.http://blog.sina.com.cn/s/blog_730edb930100pyra.html（参数替换及扩展和字符串操作）
+
+	3.http://blog.sina.com.cn/s/blog_7c95e5850100zpch.html（shell截取变量字符串）
+
+	4.http://blog.sina.com.cn/s/blog_6bd7d943010152ov.html（函数 shell）
+
+	5.http://www.cnblogs.com/chengmo/archive/2010/09/30/1839632.html（linux shell 数组建立及使用技巧）
+
+	6.http://blog.csdn.net/lanxinju/article/details/6032455（Shell中的&&、||、()和{}）
+
+	7.http://blog.csdn.net/lanxinju/article/details/6032368（ shell中的fork、source和exec总结（包括环境变量））
+
+	8.http://hi.baidu.com/fangqianshu/item/1128d317ed41c46d1009b53e（Linux Shell中的延时函数）
+
+	9.http://www.cnblogs.com/happyhotty/articles/2065412.html（Shell数值、字符串比较）
+
+	10.http://blog.zol.com.cn/2322/article_2321763.html（shell中$(( )) 与 $( ) 还有${ }的区别）
+
+	11.http://www.ibm.com/developerworks/cn/linux/l-cn-bashrecur（Bash 中的递归函数，含有命令重名时的搜索顺序）
+
+	12.http://www.cnblogs.com/aaronwxb/archive/2011/08/19/2145364.html（linux shell 用sed命令在文本的行尾或行首添加字符）
+
+	13.http://baike.baidu.com/link?url=XawLTshZ6v2Elsb0aSniHwIfGbMf0jkojYri7wFflFvdumSluG3BaQD4TGBYVvPM（百度百科--正则表达式）
+
+	14.http://www.cnblogs.com/lin714115/archive/2010/09/25/1834690.html（正则表达式语法）
+
+	15.http://www.iteye.com/topic/587673（linux sed命令详解，很详细）
+
+	16.http://www.cnblogs.com/fhefh/archive/2011/11/22/2259097.html（sed之G、H、g、h使用）
+
+	17.http://hi.baidu.com/aaa103439/item/dbaa6d0d27b4f812cc34eab8（sed命令n，N，d，D，p，P，h，H，g，G，x解析）
+
+	18.http://tec110505.diandian.com/post/2011-09-05/4728525（如何使用sed删除倒数第一行和倒数的几行？）
+
+	19.http://blog.csdn.net/wjcquking/article/details/6634504（linux下与windows下的换行符）
+
+	20.http://www.cnblogs.com/edwardlost/archive/2010/09/17/1829145.html（sed命令详解）
+
+	21.http://quweiprotoss.blog.163.com/blog/static/4088288320110153113125/（Sed 介绍和教程[3]）
+
+
+
+
+
+
+
+
+
+
+
+

@@ -6,3 +6,4 @@
 6、vim 编辑窗口   进入vim视图，按insert或i开始编辑，编辑完按Esc结束插入，按:wq保存，在按回车键退出vim视图
 7.  sz  从远程服务器下载到本地     exp:  sz /yaozhang/1.txt
 8. awk 文本分析(把文件逐行读入)
+9. ls -la 显示隐藏文件及详细文件

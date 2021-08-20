@@ -9,3 +9,27 @@
 9. ls -la 显示隐藏文件及详细文件
 10. ps -ef  显示全部进程信息，同命令行
 11. df -h 查看磁盘使用情况，-h格式化后输出
+12. rpm 软件的安装与卸载，-i显示安装包信息，-iv在安装过程中显示安装文件信息
+13. rpm 软件的卸载，rpm -e 需要卸载的安装包，rpm -u 升级操作，rpm -v验证操作
+14. mkdir 创建目录
+15. rmdir 删除目录
+16. more 分页查看文件内容
+17. tail  查看文件内容，-f 循环读取，-n 行数
+18. free 查看系统内存
+19. pwd 查看当前路径
+20. clear 清除当前屏幕内容
+21. reboot 表示立即重启
+22. cp 复制文件或目录，复制目录时必须使用参数-r
+23. uptime 打印系统运行多长时间，目前登录几个用户
+24. ssh 登录到远程主机
+25. find 在指定目录查找文件，-name根据文件名查找，一个“.”表示当前目录   exp：find . -name test.sh
+26. kill 结束进程，kill -9 进程pid 彻底杀死进程
+27. grep 查找文件里符合条件的字符串
+28. pgrep 定位包含某个关键字的进程pid
+29. df 查看磁盘空间。-h格式化后的可读格式
+30. service mysql status 查看mysql是否启动
+31. service network restart 重启网络，或者sysemctl start network.service
+32. shutdown 最常用也最安全的关机和重启命令，-h 停止系统服务并关机，-r 停止系统服务并重启
+33. netstat 显示网络状态，-a显示详细的网络状况
+
+

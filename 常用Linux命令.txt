@@ -31,5 +31,6 @@
 31. service network restart 重启网络，或者sysemctl start network.service
 32. shutdown 最常用也最安全的关机和重启命令，-h 停止系统服务并关机，-r 停止系统服务并重启
 33. netstat 显示网络状态，-a显示详细的网络状况
+34. netstat -apn | grep 8080 查看端口是否被占用，-a显示所有，-p显示进程号和进程名，-n只显示数字，不用别名
 
 
